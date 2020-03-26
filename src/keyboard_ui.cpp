@@ -1,5 +1,13 @@
+#include <string>
 #include "keyboard_ui.h"
+
 #include <fl_imgtk.h>
+#include <FL/Fl_PNG_Image.H>
+#include <resource.h>
+
+////////////////////////////////////////////////////////////////////////////////
+
+using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -24,8 +32,67 @@
 KbdWindow*  winKbdr = NULL;
 Fl_Dial*    roller_x  = NULL;
 Fl_Dial*    roller_y  = NULL;
+string      resourcebase;
 
 ////////////////////////////////////////////////////////////////////////////////
+
+bool getResource( const char* scheme, uchar** buff, unsigned* buffsz )
+{
+    wchar_t convscheme[80] = {0,};
+
+    fl_utf8towc( scheme, strlen(scheme), convscheme, 80 );
+
+    HRSRC rsrc = FindResource( NULL, convscheme, RT_RCDATA );
+    if ( rsrc != NULL )
+    {
+        *buffsz = SizeofResource( NULL, rsrc );
+        if ( *buffsz > 0 )
+        {
+            HGLOBAL glb = LoadResource( NULL, rsrc );
+            if ( glb != NULL )
+            {
+                void* fb = LockResource( glb );
+                if ( fb != NULL )
+                {
+                    uchar* cpbuff = new uchar[ *buffsz ];
+                    if ( cpbuff != NULL )
+                    {
+                        memcpy( cpbuff, fb, *buffsz );
+
+                        *buff = cpbuff;
+
+                        UnlockResource( glb );
+                        return true;
+                    }
+
+                    UnlockResource( glb );
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+Fl_RGB_Image* createResImage( const char* scheme )
+{
+    if ( scheme != NULL )
+    {
+        uchar* buff = NULL;
+        unsigned buffsz = 0;
+
+        if ( getResource( scheme, &buff, &buffsz ) == true )
+        {
+            Fl_RGB_Image* retimg = new Fl_PNG_Image( scheme, buff, buffsz );
+            delete[] buff;
+
+            return retimg;
+        }
+    }
+
+    return NULL;
+}
+
 
 void btnConfig( Fl_Button* btn, int lblsz, Fl_Callback* cb = NULL, \
                 void* prm = NULL, unsigned spcol = 0  )
@@ -58,7 +125,7 @@ void btnConfig( Fl_Button* btn, int lblsz, Fl_Callback* cb = NULL, \
 
 KbdWindow* make_window() 
 {
-    winKbdr = new KbdWindow( 945, 395, "RaphK's KEYBOARDER !" );
+    winKbdr = new KbdWindow( 940, 395, "RaphK's KEYBOARDER !" );
     
     if ( winKbdr != NULL )
     {
@@ -83,6 +150,17 @@ KbdWindow* make_window()
                                                                0x151515FF,
                                                                true );
             boxBG->image( imgBack );
+        }
+        
+        Fl_RGB_Image* imgTitle = createResImage( "pimg_load" );
+        if ( imgTitle != NULL )
+        {
+            Fl_Box* boxITitle = new Fl_Box( 0, 0, imgTitle->w(), imgTitle->h() );
+            if ( boxITitle != NULL )
+            {
+                boxITitle->box( FL_NO_BOX );
+                boxITitle->image( imgTitle );
+            }
         }
         
         int putW = 40;

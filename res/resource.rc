@@ -34,6 +34,8 @@ LANGUAGE LANG_NEUTRAL, LANG_NEUTRAL
     }
 }
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+pimg_load              RCDATA      ".\\title_image.png"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 1                  RT_MANIFEST    ".\\manifest.xml"
